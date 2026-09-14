@@ -1,0 +1,486 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="General.Failure" xml:space="preserve">
+    <value>حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقاً.</value>
+  </data>
+  <data name="General.NotFound" xml:space="preserve">
+    <value>المورد المطلوب غير موجود.</value>
+  </data>
+  <data name="General.Unauthorized" xml:space="preserve">
+    <value>وصول غير مصرح به.</value>
+  </data>
+  <data name="General.Forbidden" xml:space="preserve">
+    <value>ليس لديك صلاحية لتنفيذ هذا الإجراء.</value>
+  </data>
+  <data name="General.DatabaseUpdateFailed" xml:space="preserve">
+    <value>فشل تحديث قاعدة البيانات.</value>
+  </data>
+  <data name="General.Conflict" xml:space="preserve">
+    <value>حدث تعارض. قد يكون المورد موجوداً مسبقاً.</value>
+  </data>
+  <data name="General.UnhandledException" xml:space="preserve">
+    <value>حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقاً.</value>
+  </data>
+  <data name="General.Validation" xml:space="preserve">
+    <value>حدث خطأ في التحقق من البيانات.</value>
+  </data>
+  <data name="General.RateLimitExceeded" xml:space="preserve">
+    <value>تم تجاوز الحد المسموح به من الطلبات. يرجى المحاولة لاحقاً.</value>
+  </data>
+  <data name="Import.Success" xml:space="preserve">
+    <value>تم استيراد البيانات بنجاح.</value>
+  </data>
+  <data name="EquipmentValidity.NotFound" xml:space="preserve">
+    <value>سجل صلاحية المعدات غير موجود.</value>
+  </data>
+  <data name="EquipmentValidity.AlreadyExists" xml:space="preserve">
+    <value>سجل صلاحية المعدات هذا موجود مسبقاً.</value>
+  </data>
+  <data name="EquipmentValidity.CreationFailed" xml:space="preserve">
+    <value>فشل إنشاء سجل صلاحية المعدات.</value>
+  </data>
+  <data name="EquipmentValidity.ChangeStatusFailed" xml:space="preserve">
+    <value>فشل تغيير حالة صلاحية المعدات.</value>
+  </data>
+  <data name="DailyValidity.NotFound" xml:space="preserve">
+    <value>سجل الصلاحية اليومية غير موجود.</value>
+  </data>
+  <data name="DailyValidity.CreationFailed" xml:space="preserve">
+    <value>فشل إنشاء سجل الصلاحية اليومية.</value>
+  </data>
+  <data name="DailyValidity.UpdateFailed" xml:space="preserve">
+    <value>فشل تحديث سجل الصلاحية اليومية.</value>
+  </data>
+  <data name="EquipmentType.NotFound" xml:space="preserve">
+    <value>نوع المعدات غير موجود.</value>
+  </data>
+  <data name="EquipmentType.DisplayOrderExists" xml:space="preserve">
+    <value>ترتيب العرض هذا مستخدم مسبقاً بواسطة نوع معدات آخر.</value>
+  </data>
+  <data name="EquipmentType.UpdateFailed" xml:space="preserve">
+    <value>فشل تحديث نوع المعدات.</value>
+  </data>
+  <data name="EquipmentType.DeleteFailed" xml:space="preserve">
+    <value>فشل حذف نوع المعدات.</value>
+  </data>
+  <data name="EquipmentType.RestoreFailed" xml:space="preserve">
+    <value>فشل استعادة نوع المعدات.</value>
+  </data>
+  <data name="EquipmentType.BadRequest" xml:space="preserve">
+    <value>لا يمكن تنفيذ هذا الإجراء لأن نوع المعدات مرتبط بمعدات نشطة.</value>
+  </data>
+  <data name="Equipment.NotFound" xml:space="preserve">
+    <value>المعدات غير موجودة.</value>
+  </data>
+  <data name="EquipmentSite.NotFound" xml:space="preserve">
+    <value>تخصيص موقع المعدات غير موجود.</value>
+  </data>
+  <data name="EquipmentSite.AlreadyUnavailable" xml:space="preserve">
+    <value>موقع المعدات هذا محدد مسبقاً كغير متاح.</value>
+  </data>
+  <data name="EquipmentSite.StatusChangeFailed" xml:space="preserve">
+    <value>فشل تغيير حالة موقع المعدات.</value>
+  </data>
+  <data name="EquipmentSiteStartDate.Validation" xml:space="preserve">
+    <value>تاريخ بدء موقع المعدات غير صالح.</value>
+  </data>
+  <data name="EquipmentSiteExistence.Validation" xml:space="preserve">
+    <value>المعدات مخصصة بالفعل لموقع آخر.</value>
+  </data>
+  <data name="EquipmentDecommissioning.Validation" xml:space="preserve">
+    <value>لا يمكن إلغاء تفعيل المعدات لأنها لا تزال مخصصة لموقع نشط.</value>
+  </data>
+  <data name="Site.NotFound" xml:space="preserve">
+    <value>الموقع غير موجود.</value>
+  </data>
+  <data name="Site.CreationFailed" xml:space="preserve">
+    <value>فشل إنشاء الموقع.</value>
+  </data>
+  <data name="Site.UpdateFailed" xml:space="preserve">
+    <value>فشل تحديث الموقع.</value>
+  </data>
+  <data name="Site.DeleteFailed" xml:space="preserve">
+    <value>فشل حذف الموقع.</value>
+  </data>
+  <data name="Site.RestoreFailed" xml:space="preserve">
+    <value>فشل استعادة الموقع.</value>
+  </data>
+  <data name="SiteDeletion.Validation" xml:space="preserve">
+    <value>لا يمكن حذف موقع يحتوي على معدات نشطة مخصصة له.</value>
+  </data>
+  <data name="User.NotFound" xml:space="preserve">
+    <value>المستخدم غير موجود.</value>
+  </data>
+  <data name="User.Failure" xml:space="preserve">
+    <value>فشلت عملية المستخدم. يرجى المحاولة مرة أخرى.</value>
+  </data>
+  <data name="User.Validation" xml:space="preserve">
+    <value>فشل التحقق من بيانات المستخدم.</value>
+  </data>
+  <data name="User.Validation.EmployeeCode" xml:space="preserve">
+    <value>يجب أن يكون كود الموظف رقماً موجباً.</value>
+  </data>
+  <data name="User.Validation.UsernameTaken" xml:space="preserve">
+    <value>اسم المستخدم موجود مسبقاً.</value>
+  </data>
+  <data name="User.Validation.RoleNotFound" xml:space="preserve">
+    <value>الدور المحدد غير موجود.</value>
+  </data>
+  <data name="User.Validation.CannotChangeAdminStatus" xml:space="preserve">
+    <value>لا يمكن تغيير حالة مستخدم مسؤول النظام.</value>
+  </data>
+  <data name="User.Validation.CannotDeleteAdmin" xml:space="preserve">
+    <value>لا يمكن حذف مستخدم مسؤول النظام.</value>
+  </data>
+  <data name="User.Failure.Create" xml:space="preserve">
+    <value>تعذر إنشاء المستخدم.</value>
+  </data>
+  <data name="User.Failure.Update" xml:space="preserve">
+    <value>تعذر تحديث المستخدم.</value>
+  </data>
+  <data name="User.Failure.Delete" xml:space="preserve">
+    <value>تعذر حذف المستخدم.</value>
+  </data>
+  <data name="UserSite.AlreadyAssigned" xml:space="preserve">
+    <value>المستخدم مخصص بالفعل لأحد هذه المواقع.</value>
+  </data>
+  <data name="UserSite.AssignFailed" xml:space="preserve">
+    <value>فشل تخصيص المستخدم للموقع.</value>
+  </data>
+  <data name="UserSite.RemoveFailed" xml:space="preserve">
+    <value>فشل إلغاء تخصيص المستخدم من الموقع.</value>
+  </data>
+  <data name="EquipmentDetails.NameExists" xml:space="preserve">
+    <value>توجد معدة بهذا الاسم مسبقاً لهذا النوع.</value>
+  </data>
+  <data name="EquipmentDetails.NotFound" xml:space="preserve">
+    <value>المعدة غير موجودة.</value>
+  </data>
+  <data name="EquipmentDetails.ChassisNumberExists" xml:space="preserve">
+    <value>رقم الشاسيه لهذه المعدة موجود بالفعل.</value>
+  </data>
+  <data name="EquipmentDetails.CreationFailed" xml:space="preserve">
+    <value>فشل إضافة بيانات المعدة.</value>
+  </data>
+  <data name="EquipmentDetails.IsDeleted" xml:space="preserve">
+    <value>لا يمكن تعديل بيانات معدة محذوفة.</value>
+  </data>
+  <data name="EquipmentDetails.UpdateFailed" xml:space="preserve">
+    <value>فشل تعديل بيانات المعدة.</value>
+  </data>
+  <data name="EquipmentDetails.Validation" xml:space="preserve">
+    <value>خطأ في التحقق من بيانات المعدة.</value>
+  </data>
+  <data name="EquipmentDetails.DecommissionActiveSite" xml:space="preserve">
+    <value>لا يمكن إلغاء تفعيل المعدة وهي لا تزال مخصصة لموقع نشط.</value>
+  </data>
+  <data name="EquipmentDetails.DecommissionDateInvalid" xml:space="preserve">
+    <value>لا يمكن أن يكون تاريخ إلغاء التفعيل قبل تاريخ انتهاء آخر موقع للمعدة.</value>
+  </data>
+  <data name="EquipmentDetails.ValidationError" xml:space="preserve">
+    <value>تاريخ إلغاء التفعيل مطلوب.</value>
+  </data>
+  <data name="EquipmentDetails.DeleteFailed" xml:space="preserve">
+    <value>فشل حذف بيانات المعدة.</value>
+  </data>
+  <data name="EquipmentDetails.RestoreFailed" xml:space="preserve">
+    <value>فشل استعادة بيانات المعدة.</value>
+  </data>
+  <data name="EquipmentDetails.Unauthorized" xml:space="preserve">
+    <value>وصول غير مصرح به للمعدة.</value>
+  </data>
+  <data name="Equipment.Decommissioned" xml:space="preserve">
+    <value>تم إلغاء تفعيل هذه المعدة ولم تعد متاحة.</value>
+  </data>
+  <data name="EquipmentSite.Validation" xml:space="preserve">
+    <value>خطأ في التحقق من تخصيص موقع المعدة.</value>
+  </data>
+  <data name="EquipmentSitePlacement.Validation" xml:space="preserve">
+    <value>لا يمكن تخصيص نفس المعدة لنفس الموقع مرتين متتاليتين.</value>
+  </data>
+  <data name="EquipmentSite.UpdateFailed" xml:space="preserve">
+    <value>فشل تحديث موقع المعدة.</value>
+  </data>
+  <data name="EquipmentSite.DeleteFailed" xml:space="preserve">
+    <value>فشل حذف موقع المعدة.</value>
+  </data>
+  <data name="EquipmentSite.RestoreFailed" xml:space="preserve">
+    <value>فشل استعادة موقع المعدة.</value>
+  </data>
+  <data name="EquipmentLog.NotFound" xml:space="preserve">
+    <value>سجل المعدة غير موجود.</value>
+  </data>
+  <data name="EquipmentValidity.CannotUpdatePastDate" xml:space="preserve">
+    <value>لا يمكن تغيير الحالة لتاريخ سابق.</value>
+  </data>
+  <data name="EquipmentValidity.SiteNotFound" xml:space="preserve">
+    <value>تعذر تحديد الموقع لهذه المعدة.</value>
+  </data>
+  <data name="Auth.AccountLocked" xml:space="preserve">
+    <value>تم قفل الحساب بسبب تكرار محاولات تسجيل الدخول الخاطئة. يرجى المحاولة لاحقاً.</value>
+  </data>
+  <data name="Auth.InvalidCredentials" xml:space="preserve">
+    <value>اسم المستخدم أو كلمة المرور غير صحيحة.</value>
+  </data>
+  <data name="Auth.UserNotFound" xml:space="preserve">
+    <value>المستخدم غير موجود.</value>
+  </data>
+  <data name="Auth.UserDeactivated" xml:space="preserve">
+    <value>تم تعطيل حساب المستخدم.</value>
+  </data>
+  <data name="Auth.UserAddedSuccess" xml:space="preserve">
+    <value>تمت إضافة المستخدم بنجاح.</value>
+  </data>
+  <data name="Auth.RoleRequired" xml:space="preserve">
+    <value>يجب تحديد الدور للتحقق.</value>
+  </data>
+  <data name="Auth.RoleForbidden" xml:space="preserve">
+    <value>ليس لديك الدور المطلوب.</value>
+  </data>
+  <data name="Auth.RoleAllowed" xml:space="preserve">
+    <value>لديك الدور المطلوب.</value>
+  </data>
+  <data name="Auth.PasswordAndConfirmRequired" xml:space="preserve">
+    <value>كلمة المرور وتأكيد كلمة المرور مطلوبان.</value>
+  </data>
+  <data name="Auth.CurrentPasswordRequired" xml:space="preserve">
+    <value>كلمة المرور الحالية مطلوبة.</value>
+  </data>
+  <data name="Auth.CurrentPasswordWrong" xml:space="preserve">
+    <value>كلمة المرور الحالية غير صحيحة.</value>
+  </data>
+  <data name="Auth.PasswordMismatch" xml:space="preserve">
+    <value>كلمات المرور غير متطابقة.</value>
+  </data>
+  <data name="Auth.PasswordChangeSuccess" xml:space="preserve">
+    <value>تم تغيير كلمة المرور بنجاح.</value>
+  </data>
+  <data name="Auth.LogoutSuccess" xml:space="preserve">
+    <value>تم تسجيل الخروج بنجاح.</value>
+  </data>
+  <data name="Auth.PasswordResetSuccess" xml:space="preserve">
+    <value>تم إعادة تعيين كلمة المرور بنجاح.</value>
+  </data>
+  <data name="Auth.LoginError" xml:space="preserve">
+    <value>حدث خطأ أثناء تسجيل الدخول.</value>
+  </data>
+  <data name="Auth.TokensMissing" xml:space="preserve">
+    <value>الرموز مفقودة من ملفات تعريف الارتباط.</value>
+  </data>
+  <data name="Auth.InvalidExpiredToken" xml:space="preserve">
+    <value>رمز منتهي الصلاحية غير صالح.</value>
+  </data>
+  <data name="Auth.InvalidRefreshToken" xml:space="preserve">
+    <value>رمز التحديث غير صالح.</value>
+  </data>
+  <data name="Auth.RefreshTokenExpired" xml:space="preserve">
+    <value>انتهت صلاحية رمز التحديث.</value>
+  </data>
+  <data name="EquipmentDetails.CreateSuccess" xml:space="preserve">
+    <value>تمت إضافة المعدة بنجاح.</value>
+  </data>
+  <data name="EquipmentDetails.UpdateSuccess" xml:space="preserve">
+    <value>تم تعديل المعدة بنجاح.</value>
+  </data>
+  <data name="EquipmentDetails.DeleteSuccess" xml:space="preserve">
+    <value>تم حذف المعدة بنجاح.</value>
+  </data>
+  <data name="EquipmentType.CreateSuccess" xml:space="preserve">
+    <value>تمت إضافة نوع المعدة بنجاح.</value>
+  </data>
+  <data name="EquipmentType.UpdateSuccess" xml:space="preserve">
+    <value>تم تعديل نوع المعدة بنجاح.</value>
+  </data>
+  <data name="EquipmentType.DeleteSuccess" xml:space="preserve">
+    <value>تم حذف نوع المعدة بنجاح.</value>
+  </data>
+  <data name="Site.CreateSuccess" xml:space="preserve">
+    <value>تمت إضافة الموقع بنجاح.</value>
+  </data>
+  <data name="Site.UpdateSuccess" xml:space="preserve">
+    <value>تم تعديل الموقع بنجاح.</value>
+  </data>
+  <data name="Site.DeleteSuccess" xml:space="preserve">
+    <value>تم حذف الموقع بنجاح.</value>
+  </data>
+  <data name="EquipmentSite.CreateSuccess" xml:space="preserve">
+    <value>تم تخصيص المعدة للموقع بنجاح.</value>
+  </data>
+  <data name="EquipmentSite.StatusChangeSuccess" xml:space="preserve">
+    <value>تم تغيير حالة موقع المعدة بنجاح.</value>
+  </data>
+  <data name="EquipmentValidity.CreateSuccess" xml:space="preserve">
+    <value>تم حفظ سجل صلاحية المعدات بنجاح.</value>
+  </data>
+  <data name="EquipmentValidity.StatusChangeSuccess" xml:space="preserve">
+    <value>تم تغيير حالة صلاحية المعدة بنجاح.</value>
+  </data>
+  <data name="User.CreateSuccess" xml:space="preserve">
+    <value>تمت إضافة المستخدم بنجاح.</value>
+  </data>
+  <data name="User.UpdateSuccess" xml:space="preserve">
+    <value>تم تعديل المستخدم بنجاح.</value>
+  </data>
+  <data name="User.DeleteSuccess" xml:space="preserve">
+    <value>تم حذف المستخدم بنجاح.</value>
+  </data>
+  <data name="User.StatusChangeSuccess" xml:space="preserve">
+    <value>تم تغيير حالة المستخدم بنجاح.</value>
+  </data>
+  <data name="UserSite.AssignSuccess" xml:space="preserve">
+    <value>تم تخصيص الموقع للمستخدم بنجاح.</value>
+  </data>
+  <data name="UserSite.RemoveSuccess" xml:space="preserve">
+    <value>تم إلغاء تخصيص الموقع بنجاح.</value>
+  </data>
+  <data name="Role.NotFound" xml:space="preserve">
+    <value>الدور المحدد غير موجود.</value>
+  </data>
+  <data name="Role.AlreadyExists" xml:space="preserve">
+    <value>اسم الدور موجود مسبقاً.</value>
+  </data>
+  <data name="Role.NameRequired" xml:space="preserve">
+    <value>اسم الدور مطلوب.</value>
+  </data>
+  <data name="Role.CannotModifySystemRole" xml:space="preserve">
+    <value>لا يمكن تعديل أو حذف الأدوار الأساسية للنظام.</value>
+  </data>
+  <data name="Role.HasAssignedUsers" xml:space="preserve">
+    <value>لا يمكن حذف الدور لوجود مستخدمين نشطين معينين به.</value>
+  </data>
+  <data name="Role.CreateSuccess" xml:space="preserve">
+    <value>تمت إضافة الدور بنجاح.</value>
+  </data>
+  <data name="Role.UpdateSuccess" xml:space="preserve">
+    <value>تم تعديل الدور بنجاح.</value>
+  </data>
+  <data name="Role.DeleteSuccess" xml:space="preserve">
+    <value>تم حذف الدور بنجاح.</value>
+  </data>
+  <data name="Role.AssignSuccess" xml:space="preserve">
+    <value>تم تعيين الدور للمستخدم بنجاح.</value>
+  </data>
+  <data name="Role.RemoveSuccess" xml:space="preserve">
+    <value>تمت إزالة الدور من المستخدم بنجاح.</value>
+  </data>
+  <data name="Role.SetRolesSuccess" xml:space="preserve">
+    <value>تم تحديث أدوار المستخدم بنجاح.</value>
+  </data>
+</root>

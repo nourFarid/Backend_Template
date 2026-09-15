@@ -2,6 +2,7 @@ using BLL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTO.RoleDtos;
+using Shared.DTO.UserRoleDtos;
 
 namespace API.Controllers;
 

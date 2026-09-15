@@ -1,6 +1,7 @@
 using DAL.Model;
 using Mapster;
 using Microsoft.AspNetCore.Identity;
+using Shared.DTO.RoleDtos;
 using Shared.DTO.UserDtos;
 
 namespace BLL.Mapping;

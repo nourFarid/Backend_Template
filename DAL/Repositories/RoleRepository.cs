@@ -60,9 +60,9 @@ public class RoleRepository : IRoleRepository
         return await _roleManager.DeleteAsync(role);
     }
 
-    public async Task<bool> RoleExistsAsync(string roleName)
+    public async Task<bool> RoleExistsAsync(string roleId)
     {
-        return await _roleManager.RoleExistsAsync(roleName);
+        return await _roleManager.RoleExistsAsync(roleId);
     }
 
     public async Task<List<User>> GetUsersInRoleAsync(string roleName)

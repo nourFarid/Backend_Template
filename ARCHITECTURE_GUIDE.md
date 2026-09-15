@@ -144,6 +144,22 @@ graph LR
        ```
      * *Option B (Recommended Best Practice):* Keep `UserName` clean without spaces for login identifiers (e.g. `"GS1001"` or `"nour.farid"`), and store the full display name with spaces in `FullName` (`"Nour Farid"`).
 
+### 6. Refresh Token Flow (Silent Session Refresh)
+
+```mermaid
+flowchart TD
+    A1["Frontend makes API call with HttpOnly Cookie"] --> A2{"Is JWT Valid?"}
+    A2 -- "Yes" --> A3["Process request and return 200 OK"]
+    A2 -- "No (Expired)" --> A4["Backend returns 401 Unauthorized"]
+    A4 --> A5["Frontend Axios Interceptor catches 401 & calls POST /api/Auth/RefreshToken"]
+    A5 --> A6["Backend validates refreshToken cookie against DB"]
+    A6 --> A7["Backend issues new JWT + rotated RefreshToken in HttpOnly Cookies"]
+    A7 --> A8["Interceptor retries original request transparently"]
+```
+
+* **Anonymous Endpoint:** `POST /api/Auth/RefreshToken` does not require an active JWT (`[Authorize]` is omitted) so expired sessions can refresh seamlessly.
+* **Automatic Cookie Delivery:** Tokens are read directly from `Request.Cookies` and updated via `Response.Cookies.Append`, keeping tokens hidden from browser JavaScript.
+
 ---
 
 ## 3. Data Access, Specifications & Pagination Architecture
@@ -550,7 +566,7 @@ protected IActionResult HandleResult(Result result, string? successMessageKey = 
     return MapErrorsToResponse(result.Errors);
 }
 
-// ✅ AFTER: Unified HandleRequest with smart defaults and optional overrides
+// ✅ AFTER: Unified HandleRequest with smart defaults, optional overrides, 204 NoContent support, and HandleError helper
 protected IActionResult HandleRequest(
     Result result, 
     object? data = null, 
@@ -561,10 +577,34 @@ protected IActionResult HandleRequest(
     if (result.IsFailure)
         return MapErrorsToResponse(result.Errors, errorStatusCode);
 
-    string? message = ResolveLocalizedMessage(successMessageKey);
+    if (statusCode == StatusCodes.Status204NoContent)
+        return NoContent(); // Returns empty HTTP 204 body per RFC standards
+
+    string? message = null;
+    if (!string.IsNullOrEmpty(successMessageKey))
+    {
+        var localized = Localizer[successMessageKey];
+        message = (!localized.ResourceNotFound && !string.IsNullOrEmpty(localized.Value))
+            ? localized.Value
+            : successMessageKey;
+    }
+
     var payload = data ?? result.GetType().GetProperty("Value")?.GetValue(result);
 
     return StatusCode(statusCode, ApiResponse<object>.Ok(payload, message, statusCode));
+}
+
+// Direct localized ad-hoc error helper for controllers:
+protected IActionResult HandleError(string code, string fallbackDescription, int statusCode = StatusCodes.Status400BadRequest)
+{
+    var localized = Localizer[code];
+    var desc = (!localized.ResourceNotFound && !string.IsNullOrEmpty(localized.Value))
+        ? localized.Value
+        : fallbackDescription;
+
+    var errorItem = new ApiErrorItem(code, desc, "Error");
+    var response = ApiResponse<object>.Fail(desc, [errorItem], statusCode);
+    return StatusCode(statusCode, response);
 }
 ```
 
@@ -598,9 +638,10 @@ public async Task<IActionResult> Import(List<ItemDto> items)
 flowchart TD
     Action["Controller calls HandleRequest"] --> Check{"Is result successful?"}
     
-    Check -->|Yes - Success| SuccessBranch{"Custom statusCode or data passed?"}
-    SuccessBranch -->|No - Default| DefSuccess["Return 200 OK with ApiResponse<br/>Auto-extracts Result Value"]
-    SuccessBranch -->|Custom statusCode 201| CustomCode["Return 201 Created with ApiResponse"]
+    Check -->|Yes - Success| SuccessBranch{"Target status code?"}
+    SuccessBranch -->|Status204NoContent| NoContent["Return 204 NoContent<br/>(Empty HTTP body)"]
+    SuccessBranch -->|Default Status200OK| DefSuccess["Return 200 OK with ApiResponse<br/>Auto-extracts Result Value or sets data: null"]
+    SuccessBranch -->|Custom Status201Created| CustomCode["Return 201 Created with ApiResponse"]
     SuccessBranch -->|Custom data payload| CustomData["Return custom payload in ApiResponse"]
     
     Check -->|No - Failure| FailBranch{"Override errorStatusCode passed?"}
@@ -615,12 +656,15 @@ flowchart TD
 | Scenario | Code Example | Returned HTTP Code & Payload |
 | :--- | :--- | :--- |
 | **1. Standard Query (Default 200)** | `return HandleRequest(result);` | `200 OK` with payload |
-| **2. Resource Creation (201 Created)** | `return HandleRequest(result, statusCode: StatusCodes.Status201Created, successMessageKey: "User.CreateSuccess");` | `201 Created` with payload |
-| **3. Non-Generic Result with Custom Object** | `return HandleRequest(result, data: new { id = entity.Id }, statusCode: 201);` | `201 Created` with `{ id }` payload |
-| **4. Custom Error Code Override** | `return HandleRequest(result, errorStatusCode: StatusCodes.Status422UnprocessableEntity);` | `422 Unprocessable Entity` with localized errors |
+| **2. Create with `200 OK` (No Data)** | `return HandleRequest(result, successMessageKey: "User.CreateSuccess");` | `200 OK` with `data: null` & localized message |
+| **3. Delete / Action with `204 NoContent`** | `return HandleRequest(result, statusCode: StatusCodes.Status204NoContent);` | `204 No Content` (*Empty body*) |
+| **4. Resource Creation (201 Created)** | `return HandleRequest(result, statusCode: StatusCodes.Status201Created, successMessageKey: "User.CreateSuccess");` | `201 Created` with payload |
+| **5. Non-Generic Result with Custom Object** | `return HandleRequest(result, data: new { id = entity.Id }, statusCode: 201);` | `201 Created` with `{ id }` payload |
+| **6. Custom Error Code Override** | `return HandleRequest(result, errorStatusCode: StatusCodes.Status422UnprocessableEntity);` | `422 Unprocessable Entity` with localized errors |
+| **7. Ad-Hoc Localized Error (`HandleError`)** | `return HandleError("File.InvalidExtension", "Only .png allowed", 400);` | `400 Bad Request` with localized `ApiResponse` |
 
 ```csharp
-// Example Controller showcasing all 4 patterns:
+// Example Controller showcasing all scenarios:
 [ApiController]
 [Route("api/[controller]")]
 public class ProductsController : ApiBaseController
@@ -633,7 +677,23 @@ public class ProductsController : ApiBaseController
         return HandleRequest(result);
     }
 
-    // Pattern 2: Result<T> with custom 201 Created status code & localized message
+    // Pattern 2: 200 OK with success message and data: null (e.g. for User Add)
+    [HttpPost("add")]
+    public async Task<IActionResult> Add(NewUserDto dto)
+    {
+        var result = await _userService.CreateAsync(dto, CurrentUserId);
+        return HandleRequest(result, successMessageKey: "User.CreateSuccess");
+    }
+
+    // Pattern 3: 204 No Content on delete (empty body)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var result = await _productService.DeleteAsync(id);
+        return HandleRequest(result, statusCode: StatusCodes.Status204NoContent);
+    }
+
+    // Pattern 4: Result<T> with custom 201 Created status code & localized message
     [HttpPost]
     public async Task<IActionResult> Create(CreateProductDto dto)
     {
@@ -641,21 +701,30 @@ public class ProductsController : ApiBaseController
         return HandleRequest(result, statusCode: StatusCodes.Status201Created, successMessageKey: "Product.CreateSuccess");
     }
 
-    // Pattern 3: Non-generic Result + custom returned object (optional)
+    // Pattern 5: Non-generic Result + custom returned object (optional)
     [HttpPost("import")]
     public async Task<IActionResult> ImportBatch(List<CreateProductDto> dtos)
     {
         var result = await _productService.ImportBatchAsync(dtos);
-        // Attaches a custom summary object without changing the service's Result signature:
         return HandleRequest(result, data: new { TotalImported = dtos.Count }, statusCode: StatusCodes.Status201Created);
     }
 
-    // Pattern 4: Explicit Error Status Code override (e.g. 422 Unprocessable Entity)
+    // Pattern 6: Explicit Error Status Code override (e.g. 422 Unprocessable Entity)
     [HttpPost("process")]
     public async Task<IActionResult> ProcessOrder(ProcessOrderDto dto)
     {
         var result = await _orderService.ProcessAsync(dto);
         return HandleRequest(result, errorStatusCode: StatusCodes.Status422UnprocessableEntity);
+    }
+
+    // Pattern 7: Direct localized error without calling domain service (e.g. file validation)
+    [HttpPost("upload")]
+    public IActionResult UploadFile(IFormFile file)
+    {
+        if (file.Length > 5 * 1024 * 1024)
+            return HandleError("File.TooLarge", "File exceeds 5MB limit", StatusCodes.Status400BadRequest);
+
+        return HandleRequest(Result.Success());
     }
 }
 ```
@@ -1128,6 +1197,50 @@ Add the success/error keys to [BLL/Resources/Messages.resx](file:///c:/Users/nor
 | `TaskItem.UpdateSuccess` | "Task updated successfully." | "تم تحديث المهمة بنجاح." |
 | `TaskItem.DeleteSuccess` | "Task deleted successfully." | "تم حذف المهمة بنجاح." |
 | `TaskItem.NotFound` | "Task item was not found." | "لم يتم العثور على المهمة." |
+
+---
+
+## 8. Role & User-Role Management Architecture
+
+### Problem & Design Strategy
+Managing roles and user-role assignments requires balancing **database relational integrity** with **ASP.NET Core Identity string-based APIs** and **clean API contracts**:
+
+```mermaid
+flowchart LR
+    subgraph Frontend ["Frontend / DTOs"]
+        F1["Dropdown binds RoleId<br/>(e.g., '3f1a2c...')"]
+    end
+
+    subgraph Service ["BLL Services (RoleService / UserService)"]
+        S1["Resolves RoleId to RoleName via RoleManager"]
+    end
+
+    subgraph Identity ["ASP.NET Identity & Auth"]
+        I1["UserManager.AddToRoleAsync(user, roleName)"]
+        I2["Claims: ClaimTypes.Role = roleName"]
+        I3["[Authorize(Roles = 'Admin,IT ADMIN')]"]
+    end
+
+    subgraph DB ["Database (AspNetUserRoles)"]
+        D1["Stores composite (UserId, RoleId)"]
+    end
+
+    F1 --> S1
+    S1 --> I1
+    I1 --> DB
+    I1 --> I2
+    I2 --> I3
+```
+
+### Key Architectural Guidelines:
+1. **Separation of DTOs**:
+   - `Shared.DTO.RoleDtos`: Contains pure role definitions (`CreateRoleDto`, `EditRoleDto`, `RoleDetailsDto`, `RoleDto`).
+   - `Shared.DTO.UserRoleDtos`: Contains user-role assignment operations (`AssignUserRoleDto`, `UpdateUserRolesDto`, `UserRoleInfoDto`).
+2. **DTO Identification (`RoleId` vs `RoleName`)**:
+   - DTOs accept **`RoleId`** for stable dropdown selection (protecting against role rename breaks).
+   - Internal service methods resolve `RoleId` $\to$ `RoleName` before calling `_userManager.AddToRoleAsync(...)` / `_userManager.RemoveFromRolesAsync(...)`.
+3. **Authorization & JWT**:
+   - JWT tokens embed role names into `ClaimTypes.Role` so standard `[Authorize(Roles = "...")]` attributes work out of the box.
 
 ---
 

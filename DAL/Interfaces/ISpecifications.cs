@@ -1,4 +1,3 @@
-using Shared.SortingOptions;
 using System.Linq.Expressions;
 
 namespace DAL.Interfaces;

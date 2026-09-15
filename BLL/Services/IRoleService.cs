@@ -1,5 +1,6 @@
 using BLL.CommonResult;
 using Shared.DTO.RoleDtos;
+using Shared.DTO.UserRoleDtos;
 
 namespace BLL.Services;
 

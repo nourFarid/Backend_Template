@@ -90,24 +90,6 @@ public class AuthController : ApiBaseController
         return HandleRequest(result, data: authResult.Response);
     }
 
-    [HttpPost("CheckRole")]
-    [Authorize]
-    public IActionResult CheckRole([FromBody] string role)
-    {
-        if (string.IsNullOrEmpty(role))
-        {
-            return HandleError("Auth.RoleRequired", "Role must be provided to check.", StatusCodes.Status400BadRequest);
-        }
-
-        bool hasRole = User.IsInRole(role);
-        if (!hasRole)
-        {
-            return HandleError("Auth.RoleForbidden", "You do not have the required role.", StatusCodes.Status403Forbidden);
-        }
-
-        return HandleMessage("Auth.RoleAllowed");
-    }
-
     [HttpPost("UpdatePassword")]
     [Authorize]
     public async Task<IActionResult> UpdatePassword([FromBody] ChangePasswordDto formBody)
@@ -160,26 +142,6 @@ public class AuthController : ApiBaseController
     {
         var result = await _authService.ResetPasswordAsync(id, dto.NewPassword);
         return HandleRequest(result, successMessageKey: "Auth.PasswordResetSuccess");
-    }
-
-    [HttpGet("ReAssign")]
-    [Authorize]
-    public async Task<IActionResult> ReAssign()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return HandleError("Auth.UserNotFound", "User does not exist.", StatusCodes.Status404NotFound);
-        }
-
-        var result = await _authService.ReGenerateTokenAsync(userId);
-        if (result.IsFailure)
-        {
-            return HandleRequest(result);
-        }
-
-        SetTokenCookies(result.Value, null);
-        return HandleMessage("Auth.TokenReassigned");
     }
 
     [HttpPost("RefreshToken")]

@@ -13,6 +13,5 @@ public interface IAuthService
     Task<bool> RoleExistsAsync(string roleName);
     Task<Result> ChangePasswordAsync(string userId, ChangePasswordDto passDto);
     Task<Result> ResetPasswordAsync(string userId, string password);
-    Task<Result<string>> ReGenerateTokenAsync(string userId);
     Task<Result<AuthResult>> RefreshTokenAsync(RefreshTokenRequestDto dto);
 }

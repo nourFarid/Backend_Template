@@ -1,19 +1,14 @@
-﻿using BLL.CommonResult;
+using BLL.CommonResult;
 using DAL.Interfaces;
 using Shared.DTO.RoleDtos;
+using Shared.DTO.UserRoleDtos;
 
 namespace BLL.Services;
 
 public class RoleService : IRoleService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private static readonly HashSet<string> SystemRoles = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Admin",
-        "IT Admin",
-        "IT ADMIN"
-    };
-
+   
     public RoleService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
@@ -32,7 +27,6 @@ public class RoleService : IRoleService
                 RoleId = role.Id,
                 RoleName = role.Name ?? string.Empty,
                 UserCount = userCount,
-                IsSystemRole = SystemRoles.Contains(role.Name ?? string.Empty)
             });
         }
 
@@ -51,7 +45,6 @@ public class RoleService : IRoleService
             RoleId = role.Id,
             RoleName = role.Name ?? string.Empty,
             UserCount = userCount,
-            IsSystemRole = SystemRoles.Contains(role.Name ?? string.Empty)
         });
     }
 
@@ -82,9 +75,7 @@ public class RoleService : IRoleService
         if (existingRole == null)
             return Error.NotFound("Role.NotFound", "The specified role was not found.");
 
-        if (SystemRoles.Contains(existingRole.Name ?? string.Empty))
-            return Error.Forbidden("Role.CannotModifySystemRole", "System roles cannot be modified.");
-
+       
         var roleWithSameName = await _unitOfWork.Roles.GetRoleByNameAsync(dto.RoleName.Trim());
         if (roleWithSameName != null && roleWithSameName.Id != dto.RoleId)
             return Error.Conflict("Role.AlreadyExists", "A role with this name already exists.");
@@ -105,10 +96,7 @@ public class RoleService : IRoleService
         if (role == null)
             return Error.NotFound("Role.NotFound", "The specified role was not found.");
 
-        if (SystemRoles.Contains(role.Name ?? string.Empty))
-            return Error.Forbidden("Role.CannotModifySystemRole", "System roles cannot be deleted.");
-
-        var userCount = await _unitOfWork.Roles.GetUserCountInRoleAsync(role.Name!);
+            var userCount = await _unitOfWork.Roles.GetUserCountInRoleAsync(role.Name!);
         if (userCount > 0)
             return Error.Validation("Role.HasAssignedUsers", "Cannot delete role because it is assigned to active users.");
 
@@ -153,7 +141,11 @@ public class RoleService : IRoleService
 
     public async Task<Result> AssignRoleToUserAsync(AssignUserRoleDto dto)
     {
-        var identityResult = await _unitOfWork.Roles.AssignRoleToUserAsync(dto.UserId, dto.RoleName);
+        var role = await _unitOfWork.Roles.GetRoleByIdAsync(dto.RoleId);
+        if (role == null || string.IsNullOrEmpty(role.Name))
+            return Error.NotFound("Role.NotFound", "The specified role was not found.");
+
+        var identityResult = await _unitOfWork.Roles.AssignRoleToUserAsync(dto.UserId, role.Name);
         if (!identityResult.Succeeded)
         {
             var errors = string.Join(" | ", identityResult.Errors.Select(e => e.Description));
@@ -165,7 +157,11 @@ public class RoleService : IRoleService
 
     public async Task<Result> RemoveRoleFromUserAsync(AssignUserRoleDto dto)
     {
-        var identityResult = await _unitOfWork.Roles.RemoveRoleFromUserAsync(dto.UserId, dto.RoleName);
+        var role = await _unitOfWork.Roles.GetRoleByIdAsync(dto.RoleId);
+        if (role == null || string.IsNullOrEmpty(role.Name))
+            return Error.NotFound("Role.NotFound", "The specified role was not found.");
+
+        var identityResult = await _unitOfWork.Roles.RemoveRoleFromUserAsync(dto.UserId, role.Name);
         if (!identityResult.Succeeded)
         {
             var errors = string.Join(" | ", identityResult.Errors.Select(e => e.Description));
@@ -177,13 +173,17 @@ public class RoleService : IRoleService
 
     public async Task<Result> SetUserRolesAsync(UpdateUserRolesDto dto)
     {
-        foreach (var roleName in dto.RoleNames)
+        var roleNames = new List<string>();
+        foreach (var roleId in dto.RoleIds)
         {
-            if (!await _unitOfWork.Roles.RoleExistsAsync(roleName))
-                return Error.Validation("Role.NotFound", $"Role '{roleName}' does not exist.");
+            var role = await _unitOfWork.Roles.GetRoleByIdAsync(roleId);
+            if (role == null || string.IsNullOrEmpty(role.Name))
+                return Error.Validation("Role.NotFound", $"Role with ID '{roleId}' does not exist.");
+
+            roleNames.Add(role.Name);
         }
 
-        var identityResult = await _unitOfWork.Roles.SetUserRolesAsync(dto.UserId, dto.RoleNames);
+        var identityResult = await _unitOfWork.Roles.SetUserRolesAsync(dto.UserId, roleNames);
         if (!identityResult.Succeeded)
         {
             var errors = string.Join(" | ", identityResult.Errors.Select(e => e.Description));

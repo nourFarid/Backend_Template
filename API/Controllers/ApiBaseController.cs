@@ -16,6 +16,11 @@ public abstract class ApiBaseController : ControllerBase
 
     protected IActionResult HandleSuccess<T>(T data, string? messageKey = null, int statusCode = StatusCodes.Status200OK)
     {
+        if (statusCode == StatusCodes.Status204NoContent)
+        {
+            return NoContent();
+        }
+
         string? message = null;
         if (!string.IsNullOrEmpty(messageKey))
         {
@@ -30,6 +35,11 @@ public abstract class ApiBaseController : ControllerBase
 
     protected IActionResult HandleMessage(string? messageKey = null, int statusCode = StatusCodes.Status200OK)
     {
+        if (statusCode == StatusCodes.Status204NoContent)
+        {
+            return NoContent();
+        }
+
         string? message = null;
         if (!string.IsNullOrEmpty(messageKey))
         {
@@ -53,6 +63,11 @@ public abstract class ApiBaseController : ControllerBase
         if (result.IsFailure)
         {
             return MapErrorsToResponse(result.Errors, errorStatusCode);
+        }
+
+        if (statusCode == StatusCodes.Status204NoContent)
+        {
+            return NoContent();
         }
 
         string? message = null;

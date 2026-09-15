@@ -12,7 +12,7 @@ public interface IRoleRepository
     Task<IdentityResult> CreateRoleAsync(string roleName);
     Task<IdentityResult> UpdateRoleAsync(string roleId, string newRoleName);
     Task<IdentityResult> DeleteRoleAsync(string roleId);
-    Task<bool> RoleExistsAsync(string roleName);
+    Task<bool> RoleExistsAsync(string roleId);
     Task<List<User>> GetUsersInRoleAsync(string roleName);
     Task<int> GetUserCountInRoleAsync(string roleName);
     Task<IList<string>> GetUserRolesAsync(string userId);

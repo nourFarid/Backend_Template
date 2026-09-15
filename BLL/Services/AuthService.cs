@@ -203,16 +203,6 @@ public class AuthService : IAuthService
         return Result.Success();
     }
 
-    public async Task<Result<string>> ReGenerateTokenAsync(string userId)
-    {
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
-            return Error.NotFound("Auth.UserNotFound", "User does not exist.");
-
-        var roles = await _userManager.GetRolesAsync(user);
-        return GenerateJwtToken(user, roles);
-    }
-
     private static string GenerateRefreshToken()
     {
         var randomNumber = new byte[64];

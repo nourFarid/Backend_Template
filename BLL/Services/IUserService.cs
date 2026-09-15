@@ -1,5 +1,6 @@
 using BLL.CommonResult;
 using Shared.DTO;
+using Shared.DTO.RoleDtos;
 using Shared.DTO.UserDtos;
 using Shared.SpecificationsQueryParams;
 

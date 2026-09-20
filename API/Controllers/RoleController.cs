@@ -1,3 +1,4 @@
+using Shared.Constants;
 using BLL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,7 @@ using Shared.DTO.UserRoleDtos;
 
 namespace API.Controllers;
 
-[Authorize(Roles = "Admin,IT ADMIN")]
+[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ITAdmin}")]
 public class RoleController : ApiBaseController
 {
     private readonly IRoleService _roleService;

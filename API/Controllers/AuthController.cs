@@ -1,3 +1,4 @@
+using Shared.Constants;
 using BLL.CommonResult;
 using BLL.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -58,7 +59,7 @@ public class AuthController : ApiBaseController
     }
 
     [HttpPost("Register")]
-    [Authorize(Roles = "Admin,IT ADMIN")]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ITAdmin}")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
         var result = await _authService.RegisterAsync(dto);
@@ -137,7 +138,7 @@ public class AuthController : ApiBaseController
     }
 
     [HttpPost("ResetPassword/{id}")]
-    [Authorize(Roles = "Admin,IT ADMIN")]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ITAdmin}")]
     public async Task<IActionResult> ResetPassword([FromBody] ChangePasswordDto dto, string id)
     {
         var result = await _authService.ResetPasswordAsync(id, dto.NewPassword);

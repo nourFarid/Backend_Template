@@ -1,3 +1,5 @@
+using Shared.Constants;
+using Shared.DTO.RoleDtos;
 using DAL.Context;
 using DAL.Interfaces;
 using DAL.Model;
@@ -40,10 +42,10 @@ public class UserRepository : IUserRepository
     }
 
     public async Task<User?> GetByIdAsync(string id) =>
-        await _userManager.FindByIdAsync(id);
+        await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == id);
 
     public async Task<User?> GetByUserNameAsync(string username) =>
-        await _userManager.FindByNameAsync(username);
+        await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.UserName == username);
 
     public async Task<string?> GetRoleAsync(User user)
     {
@@ -148,7 +150,7 @@ public class UserRepository : IUserRepository
     public async Task<List<IdentityRole>> GetAllRoleAsync()
     {
         return await _roleManager.Roles
-            .Where(r => r.NormalizedName != "IT ADMIN")
+            .Where(r => r.NormalizedName != AppRoles.ITAdmin.ToUpper())
             .ToListAsync();
     }
 
@@ -164,49 +166,24 @@ public class UserRepository : IUserRepository
 
     public async Task<IEnumerable<User>> GetAllAsync(ISpecifications<User> specs)
     {
-        var query = _userManager.Users.AsNoTracking();
+        var query = _userManager.Users
+            .Include(u => u.Roles)
+            .AsNoTracking();
 
-        var itAdminUsers = await _userManager.GetUsersInRoleAsync("IT ADMIN");
+        var itAdminUsers = await _userManager.GetUsersInRoleAsync(AppRoles.ITAdmin);
         var itAdminUserIds = itAdminUsers.Select(u => u.Id).ToList();
         query = query.Where(u => !itAdminUserIds.Contains(u.Id));
 
         query = SpecificationsEvaluator.BuildQuery(query, specs);
 
-        var users = await query.ToListAsync();
-        var userIds = users.Select(u => u.Id).ToList();
-
-        var userRoles = await (
-            from ur in _context.UserRoles.AsNoTracking()
-            join r in _context.Roles.AsNoTracking() on ur.RoleId equals r.Id
-            where userIds.Contains(ur.UserId)
-            select new
-            {
-                ur.UserId,
-                RoleId = r.Id,
-                RoleName = r.Name!
-            }
-        ).ToListAsync();
-
-        foreach (var user in users)
-        {
-            user.Roles = userRoles
-                .Where(ur => ur.UserId == user.Id)
-                .Select(ur => new Role
-                {
-                    RoleId = ur.RoleId,
-                    RoleName = ur.RoleName
-                })
-                .ToList();
-        }
-
-        return users;
+        return await query.ToListAsync();
     }
 
     public async Task<int> GetCountAsync(ISpecifications<User> specs)
     {
         var query = _userManager.Users.AsNoTracking();
 
-        var itAdminUsers = await _userManager.GetUsersInRoleAsync("IT ADMIN");
+        var itAdminUsers = await _userManager.GetUsersInRoleAsync(AppRoles.ITAdmin);
         var itAdminUserIds = itAdminUsers.Select(u => u.Id).ToList();
         query = query.Where(u => !itAdminUserIds.Contains(u.Id));
 

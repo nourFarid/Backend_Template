@@ -1,3 +1,4 @@
+using Shared.Constants;
 using BLL.CommonResult;
 using BLL.Specifications.UserSpecifications;
 using DAL.Interfaces;
@@ -29,7 +30,7 @@ public class UserService : IUserService
             return Error.Validation("User.Validation.UsernameTaken", "Username already exists.");
 
         var roleName = await _unitOfWork.Users.ResolveRoleNameByIdAsync(dto.RoleId);
-        if (roleName == null || roleName == "IT Admin")
+        if (roleName == null || roleName == AppRoles.ITAdmin)
             return Error.Validation("User.Validation.RoleNotFound", "The specified role does not exist.");
 
         var entity = dto.Adapt<User>();
@@ -74,16 +75,6 @@ public class UserService : IUserService
         if (entity == null)
             return Error.NotFound("User.NotFound", "User not found.");
 
-        var roleName = await _unitOfWork.Users.GetRoleAsync(entity);
-        if (roleName != null)
-        {
-            var roleId = await _unitOfWork.Users.ResolveRoleIdByNameAsync(roleName);
-            entity.Roles =
-            [
-                new Role { RoleId = roleId ?? string.Empty, RoleName = roleName }
-            ];
-        }
-
         var dto = entity.Adapt<UserDto>();
         return dto;
     }
@@ -105,7 +96,7 @@ public class UserService : IUserService
             return Error.Validation("User.Validation.UsernameTaken", "Username already exists.");
 
         var roleName = await _unitOfWork.Users.ResolveRoleNameByIdAsync(dto.RoleId);
-        if (roleName == null || roleName == "IT Admin")
+        if (roleName == null || roleName == AppRoles.ITAdmin)
             return Error.Validation("User.Validation.RoleNotFound", "The specified role does not exist.");
 
         dto.Adapt(user);
@@ -124,7 +115,7 @@ public class UserService : IUserService
             return Error.NotFound("User.NotFound", "User not found.");
 
         var currentUserRole = await _unitOfWork.Users.GetRoleAsync(entity);
-        if (currentUserRole == "IT Admin")
+        if (currentUserRole == AppRoles.ITAdmin)
             return Error.Validation("User.Validation.CannotChangeAdminStatus", "Cannot change status of IT Admin user.");
 
         var updated = await _unitOfWork.Users.ChangeStatusAsync(entity.Id);
@@ -141,7 +132,7 @@ public class UserService : IUserService
             return Error.NotFound("User.NotFound", "User not found.");
 
         var userRole = await _unitOfWork.Users.GetRoleAsync(user);
-        if (userRole == "IT Admin")
+        if (userRole == AppRoles.ITAdmin)
             return Error.Validation("User.Validation.CannotDeleteAdmin", "Cannot delete IT Admin user.");
 
         var result = await _unitOfWork.Users.DeleteAsync(id);

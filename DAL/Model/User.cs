@@ -23,6 +23,6 @@ public class User : IdentityUser
     public string? RefreshToken { get; set; } = string.Empty;
     public DateTime? RefreshTokenExpiryTime { get; set; }
 
-    [NotMapped]
-    public List<Role>? Roles { get; set; }
+    // Navigation property: Real .NET IdentityRole
+    public ICollection<IdentityRole> Roles { get; set; } = new List<IdentityRole>();
 }

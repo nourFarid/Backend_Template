@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using DAL.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -17,6 +18,12 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasIndex(u => u.UserCode)
             .IsUnique();
+
+        builder.HasMany(u => u.Roles)
+            .WithMany()
+            .UsingEntity<IdentityUserRole<string>>(
+                j => j.HasOne<IdentityRole>().WithMany().HasForeignKey(ur => ur.RoleId),
+                j => j.HasOne<User>().WithMany().HasForeignKey(ur => ur.UserId));
 
         builder.HasData(
             new User

@@ -1,3 +1,4 @@
+using Shared.Constants;
 using BLL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ public class UserController : ApiBaseController
     }
 
     [HttpGet("{userId}")]
-    [Authorize(Roles = "Admin,IT ADMIN")]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ITAdmin}")]
     public async Task<IActionResult> GetUserById(string userId)
     {
         var result = await _userService.GetByIdAsync(userId);
@@ -25,7 +26,7 @@ public class UserController : ApiBaseController
     }
 
     [HttpPost("Add")]
-    [Authorize(Roles = "Admin,IT ADMIN")]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ITAdmin}")]
     public async Task<IActionResult> CreateUser([FromBody] NewUserDto newUser)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -34,7 +35,7 @@ public class UserController : ApiBaseController
     }
 
     [HttpPost("Update")]
-    [Authorize(Roles = "Admin,IT ADMIN")]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ITAdmin}")]
     public async Task<IActionResult> Update([FromBody] EditUserDto user)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -43,7 +44,7 @@ public class UserController : ApiBaseController
     }
 
     [HttpPut("ChangeStatus/{id}")]
-    [Authorize(Roles = "Admin,IT ADMIN")]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ITAdmin}")]
     public async Task<IActionResult> ChangeUserStatus(string id)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -52,7 +53,7 @@ public class UserController : ApiBaseController
     }
 
     [HttpDelete("Delete/{id}")]
-    [Authorize(Roles = "Admin,IT ADMIN")]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ITAdmin}")]
     public async Task<IActionResult> Delete(string id)
     {
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
@@ -70,7 +71,7 @@ public class UserController : ApiBaseController
     }
 
     [HttpGet("ListAllRoles")]
-    [Authorize(Roles = "Admin,IT ADMIN")]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ITAdmin}")]
     public async Task<IActionResult> GetAllRoles()
     {
         var result = await _userService.GetAllRoleAsync();

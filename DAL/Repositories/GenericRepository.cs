@@ -18,7 +18,7 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
 
     public virtual async Task<List<TEntity>> GetAllAsync()
     {
-        return await _entities.ToListAsync();
+        return await _entities.AsNoTracking().ToListAsync();
     }
 
     public virtual async Task<TEntity?> GetByIdAsync(int id)
@@ -29,14 +29,13 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
     public virtual async Task<TEntity> AddAsync(TEntity entity)
     {
         await _entities.AddAsync(entity);
-        await _context.SaveChangesAsync();
         return entity;
     }
 
-    public virtual async Task<bool> UpdateAsync(TEntity entity)
+    public virtual Task<bool> UpdateAsync(TEntity entity)
     {
         _entities.Update(entity);
-        return await _context.SaveChangesAsync() > 0;
+        return Task.FromResult(true);
     }
 
     public virtual async Task<bool> DeleteAsync(int id)
@@ -46,12 +45,13 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
             return false;
 
         _entities.Remove(record);
-        return await _context.SaveChangesAsync() > 0;
+        return true;
     }
 
     public virtual async Task<List<TEntity>> GetPagedAsync(int pageNumber, int pageSize)
     {
         return await _entities
+            .AsNoTracking()
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -93,20 +93,19 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
         }
 
         _entities.Update(entity);
-        return await _context.SaveChangesAsync() > 0;
+        return true;
     }
 
     public virtual async Task<List<TEntity>> AddRangeAsync(List<TEntity> entities)
     {
         await _entities.AddRangeAsync(entities);
-        await _context.SaveChangesAsync();
         return entities;
     }
 
-    public virtual async Task<bool> UpdateRangeAsync(List<TEntity> entities)
+    public virtual Task<bool> UpdateRangeAsync(List<TEntity> entities)
     {
         _entities.UpdateRange(entities);
-        return await _context.SaveChangesAsync() > 0;
+        return Task.FromResult(true);
     }
 
     public virtual async Task<IEnumerable<TEntity>> GetAllAsync(ISpecifications<TEntity> specs)

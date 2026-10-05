@@ -60,6 +60,9 @@ builder.Services.AddBllDependencies(builder.Configuration);
 // 4. Localization Configuration
 builder.Services.AddLocalization(opts => opts.ResourcesPath = string.Empty);
 
+// 5. Global Exception Handling (IExceptionHandler)
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 var supportedCultures = new[] { "en", "ar", "ar-EG" };
 var localizationOptions = new RequestLocalizationOptions()
     .SetDefaultCulture("en")
@@ -243,7 +246,7 @@ app.UseHttpsRedirection();
 // Request Localization must execute before exception handling and controllers
 app.UseRequestLocalization(app.Services.GetRequiredService<RequestLocalizationOptions>());
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseExceptionHandler();
 
 app.UseRouting();
 app.UseCors("AllowFrontend");

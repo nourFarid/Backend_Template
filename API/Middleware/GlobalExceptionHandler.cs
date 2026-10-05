@@ -1,4 +1,5 @@
-using BLL;
+﻿using BLL;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
@@ -9,32 +10,38 @@ using System.Text.Json;
 
 namespace API.Middleware;
 
-public class ExceptionHandlingMiddleware
+public class GlobalExceptionHandler(
+    ILogger<GlobalExceptionHandler> logger,
+    IStringLocalizer<Messages> localizer) : IExceptionHandler
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<ExceptionHandlingMiddleware> _logger;
-
-    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        _next = next;
-        _logger = logger;
-    }
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = false
+    };
 
-    public async Task InvokeAsync(HttpContext context, IStringLocalizer<Messages> localizer)
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken)
     {
-        try
+        // 1. Client disconnection - not an internal server error, skip noisy logging
+        if (exception is OperationCanceledException)
         {
-            await _next(context);
+            logger.LogInformation("Request cancelled by client at {Path}", httpContext.Request.Path);
+            httpContext.Response.StatusCode = 499; // Client Closed Request
+            return true;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An unhandled exception occurred: {Message}", ex.Message);
-            await HandleExceptionAsync(context, ex, localizer);
-        }
-    }
 
-    private static Task HandleExceptionAsync(HttpContext context, Exception exception, IStringLocalizer<Messages> localizer)
-    {
+        // 2. Prevent stream collision if response headers have already started flushing
+        if (httpContext.Response.HasStarted)
+        {
+            logger.LogWarning("The response has already started, cannot write error response for: {Message}", exception.Message);
+            return false;
+        }
+
+        logger.LogError(exception, "An unhandled exception occurred: {Message}", exception.Message);
+
         var statusCode = HttpStatusCode.InternalServerError;
         string errorCode = "General.UnhandledException";
         string defaultMessage = "An unexpected error occurred. Please try again later.";
@@ -81,15 +88,10 @@ public class ExceptionHandlingMiddleware
         var errorItem = new ApiErrorItem(errorCode, resolvedMessage, "ServerCrash");
         var response = ApiResponse<object>.Fail(resolvedMessage, [errorItem], (int)statusCode);
 
-        context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)statusCode;
+        httpContext.Response.ContentType = "application/json";
+        httpContext.Response.StatusCode = (int)statusCode;
 
-        var jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
-
-        return context.Response.WriteAsync(JsonSerializer.Serialize(response, jsonOptions));
+        await httpContext.Response.WriteAsJsonAsync(response, JsonOptions, cancellationToken);
+        return true;
     }
 }

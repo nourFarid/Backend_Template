@@ -101,11 +101,13 @@ Every response received from the backend follows this logical structure:
 ### 4.2 Frontend Error Handling Rules
 
 1. **Account Lockout (`423 Locked`):**
-   - Triggered when a user enters 5 consecutive incorrect passwords.
-   - Action: Display a warning notification with the backend message (e.g. *"Account is temporarily locked. Please try again in 15 minutes."*). Disable login submit button during cooldown if desired.
-2. **Rate Limiting (`429 Too Many Requests`):**
-   - Triggered when exceeding endpoint request limits (e.g. over 10 login attempts per minute).
-   - Action: Display a rate limit warning banner or toast.
+   - **Cooldown:** **15 Minutes** on the specific username (`UserName`).
+   - **Cause:** Triggered when 5 consecutive incorrect passwords are submitted for that account.
+   - **Action:** Display a warning notification with the backend message (e.g. *"Account is temporarily locked. Please try again in 15 minutes."*). Disable login submit button during cooldown if desired.
+2. **IP Rate Limiting (`429 Too Many Requests`):**
+   - **Cooldown:** **60 Seconds (1 Minute)** on the client IP address.
+   - **Cause:** Triggered when exceeding 10 requests/minute on Auth endpoints or 100 requests/minute globally.
+   - **Action:** Display a rate limit warning banner or toast (e.g. *"Too many requests. Please wait a moment before trying again."*). The IP will be unblocked automatically after 60 seconds.
 3. **Form & Field Validation (`400 Bad Request` with `errors` array):**
    - Action: Iterate through the `errors` array, match each `error.code` to the corresponding form field input, and display the localized message directly below that input. Show the overall `message` in a toast.
 4. **General Business Errors (`404 Not Found`, `409 Conflict`, `403 Forbidden`):**

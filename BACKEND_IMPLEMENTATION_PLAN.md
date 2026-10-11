@@ -1,6 +1,49 @@
-# Enterprise Backend API Template — Technical Reference & Architecture Blueprint
+﻿# Enterprise Backend API Template — Technical Reference & Architecture Blueprint
 
 This document serves as the comprehensive technical reference, design blueprint, and developer handbook for the **Backend Template**. It details **what problem each component solves**, provides **visual diagrams and flowcharts**, illustrates **real-world scenarios**, and includes **before-and-after code comparisons**.
+
+---
+
+## Table of Contents / Topic Index
+
+1. [Clean Architecture & Layer Responsibilities](#1-clean-architecture--layer-responsibilities)
+   * [Layer Responsibilities & Problem Mapping](#layer-responsibilities--problem-mapping)
+2. [Authentication & Security Architecture](#2-authentication--security-architecture)
+   * [Multi-Layered Security Flow](#the-solution-multi-layered-security-flow)
+   * [Defense-in-Depth Summary](#defense-in-depth-summary)
+   * [Key Security Architectural Guidelines](#key-security-architectural-guidelines)
+3. [Data Access, Specifications & Pagination Architecture](#3-data-access-specifications--pagination-architecture)
+   * [Generic Specifications Flow](#the-solution-generic-specifications-flow)
+   * [Key Architectural Guidelines](#3-key-architectural-guidelines)
+4. [Unit of Work & Repository Pattern](#4-unit-of-work--repository-pattern)
+   * [Unit of Work Lifetime & Scoped Management](#the-solution-unit-of-work-lifetime--scoped-management)
+   * [Key Architectural Guidelines](#4-key-architectural-guidelines)
+5. [Standardized Response & Error Handling](#5-standardized-response--error-handling)
+   * [Global Result Flow & Exception Handling](#the-solution-global-result-flow--exception-handling)
+   * [Error Type Catalog](#error-type-catalog)
+6. [Multi-Language Localization (i18n) & Error Fallback System](#6-multi-language-localization-i18n--error-fallback-system)
+   * [Localization Flowchart & Fallback Mechanism](#the-solution-localization-flowchart--fallback-mechanism)
+   * [Key Architectural Guidelines](#6-key-architectural-guidelines)
+7. [Developer Blueprint: Adding a New Entity (Step-by-Step Tutorial)](#7-developer-blueprint-adding-a-new-entity-step-by-step-tutorial)
+   * [Step 1: Define DAL Entity Model](#step-1-define-dal-entity-model)
+   * [Step 2: Add EF Core Fluent Configuration](#step-2-add-ef-core-fluent-configuration)
+   * [Step 3: Define DTOs](#step-3-define-dtos)
+   * [Step 4: Configure Mapster Mapping](#step-4-configure-mapster-mapping)
+   * [Step 5: Create Specifications](#step-5-create-specifications)
+   * [Step 6: Create Repository](#step-6-create-repository)
+   * [Step 7: Create Service Interface & Implementation](#step-7-create-service-interface--implementation)
+   * [Step 8: Expose REST API Controller](#step-8-expose-rest-api-controller)
+8. [Role & User-Role Management Architecture](#8-role--user-role-management-architecture)
+   * [Problem & Design Strategy](#problem--design-strategy)
+   * [Strongly-Typed Role Constants (`AppRoles.cs`) & Complete Usage](#1-strongly-typed-role-constants-sharedconstantsapproles)
+   * [Domain Entity & Navigation Property (`User.cs`)](#2-domain-entity--navigation-property-usercs)
+   * [EF Core Many-to-Many Configuration (`UserConfiguration.cs`)](#3-ef-core-many-to-many-configuration-userconfigurationcs)
+   * [Single-Query Eager Loading (`UserRepository.cs`)](#4-single-query-eager-loading-userrepositorycs)
+   * [Clean Object Mapping (`UserMappingConfig.cs`)](#5-clean-object-mapping-usermappingconfigcs)
+   * [High Level (`UserManager`) vs Low Level (`UserStore`)](#6-high-level-usermanager-vs-low-level-userstore)
+9. [Verification Plan](#verification-plan)
+   * [Automated Build Verification](#automated-build-verification)
+   * [Manual Verification Checklist](#manual-verification-checklist)
 
 ---
 
@@ -121,15 +164,27 @@ graph LR
    - Access and Refresh tokens are delivered via `Set-Cookie` headers.
    - JavaScript cannot access them, eliminating the risk of session theft via XSS.
 2. **Dual-Tier Rate Limiting (`Microsoft.AspNetCore.RateLimiting`):**
-   - **Global Policy:** 100 requests/minute per client IP (Sliding Window).
-   - **Auth Policy (`AuthLimiter`):** 10 requests/minute per client IP (Fixed Window) on sensitive endpoints (`Login`, `Register`).
-3. **Automatic Account Lockout:**
-   - Configured in [DAL/DependencyInjection.cs](file:///c:/Users/norhan/source/repos/Backend_Template/DAL/DependencyInjection.cs): 5 failed password attempts locks the account for 15 minutes.
-   - After 15 minutes pass, logging in with the correct password resets the failed count back to 0.
-4. **Real-time Security Stamp Invalidation (`OnTokenValidated`):**
+   - **Global Policy (`GlobalLimiter`):** 100 requests/minute per client IP (Sliding Window in 4 segments of 15 seconds). Automatically frees capacity incrementally every 15 seconds.
+   - **Auth Policy (`AuthLimiter`):** 10 requests/minute per client IP (Fixed Window) on sensitive endpoints (`Login`, `Register`). Completely resets the 10-request permit budget after 60 seconds.
+3. **Automatic Account Lockout vs. IP Rate Limit Comparison:**
+
+| Security Defense | What It Blocks | Cooldown / Reset Window | Why It Exists |
+| :--- | :--- | :---: | :--- |
+| **IP Rate Limiting (`429 Too Many Requests`)** | **Client IP Address** | **60 Seconds (1 min)** | Mitigates volumetric DoS, automated bot flooding, and CPU exhaustion from hashing. |
+| **Account Lockout (`423 Locked`)** | **Specific User Account** (`UserName`) | **15 Minutes** | Prevents targeted credential stuffing and password-guessing attacks across changing IPs. |
+
+4. **Live Verification Results (13 Sequential Requests Test):**
+
+| Request # | Status Code | Message Returned | Security Layer Triggered |
+| :---: | :---: | :--- | :--- |
+| **1 – 4** | `401 Unauthorized` | *"Invalid username or password."* | Credential validation |
+| **5 – 10** | `423 Locked` | *"Account is locked due to multiple failed login attempts..."* | 🔒 **Brute-Force Lockout** (5th failed password $\to$ 15 min lock) |
+| **11 – 13** | `429 Too Many Requests` | *"Too many requests. Please try again later."* | 🛡️ **IP Rate Limiter** (11th req in 60s $\to$ blocked at middleware) |
+
+5. **Real-time Security Stamp Invalidation (`OnTokenValidated`):**
    - Every request validates the `SecurityStamp` claim against the database.
    - Changing password or logging out updates the user's `SecurityStamp`, **instantly killing all active sessions** across all devices.
-5. **Username Validation & Allowed Characters (`options.User.AllowedUserNameCharacters`):**
+6. **Username Validation & Allowed Characters (`options.User.AllowedUserNameCharacters`):**
    - **The Default Behavior:** ASP.NET Core Identity defaults to a strict whitelist: `"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+"`. Notice that **spaces (`' '`) are not allowed by default**.
    - **The Login Gotcha (Refresh Tokens & `UpdateAsync`):**
      * When a user logs in successfully, `AuthService.LoginAsync` generates a Refresh Token and calls `await _userManager.UpdateAsync(user)`.
@@ -147,14 +202,25 @@ graph LR
 ### 6. Refresh Token Flow (Silent Session Refresh)
 
 ```mermaid
-flowchart TD
-    A1["Frontend makes API call with HttpOnly Cookie"] --> A2{"Is JWT Valid?"}
-    A2 -- "Yes" --> A3["Process request and return 200 OK"]
-    A2 -- "No (Expired)" --> A4["Backend returns 401 Unauthorized"]
-    A4 --> A5["Frontend Axios Interceptor catches 401 & calls POST /api/Auth/RefreshToken"]
-    A5 --> A6["Backend validates refreshToken cookie against DB"]
-    A6 --> A7["Backend issues new JWT + rotated RefreshToken in HttpOnly Cookies"]
-    A7 --> A8["Interceptor retries original request transparently"]
+graph TD
+    subgraph Legacy_Flow ["Legacy: Custom Middleware (Before)"]
+        M1["HTTP Request"] --> M2["ExceptionHandlingMiddleware"]
+        M2 --> M3["Controller or BLL Action"]
+        M3 -->|Throws Exception| M2
+        M2 --> M4["Giant switch block"]
+        M4 --> M5["Allocates new JsonSerializerOptions"]
+        M5 --> M6["Allocates JSON string in RAM"]
+        M6 --> M7["WriteAsync to Response Stream"]
+    end
+
+    subgraph Modern_Flow ["Modern: IExceptionHandler Pipeline (After)"]
+        H1["HTTP Request"] --> H2["app.UseExceptionHandler"]
+        H2 --> H3["Controller or BLL Action"]
+        H3 -->|Throws Exception| H2
+        H2 --> H4["GlobalExceptionHandler : IExceptionHandler"]
+        H4 --> H5["Direct stream to Response.Body"]
+        H4 --> H6["Preserves ApiResponse with localized error and TraceId"]
+    end
 ```
 
 * **Anonymous Endpoint:** `POST /api/Auth/RefreshToken` does not require an active JWT (`[Authorize]` is omitted) so expired sessions can refresh seamlessly.
@@ -528,6 +594,285 @@ Every single endpoint — whether Success or Error, 200, 400, 401, 403, 404, 423
 2. **Model Validation Override:** In [Program.cs](file:///c:/Users/norhan/source/repos/Backend_Template/API/Program.cs#L28-L52), `InvalidModelStateResponseFactory` intercepts model binding errors and wraps them into `ApiResponse<object>.Fail`.
 3. **Unhandled Exceptions:** [ExceptionHandlingMiddleware.cs](file:///c:/Users/norhan/source/repos/Backend_Template/API/Middleware/ExceptionHandlingMiddleware.cs) catches database crashes and server faults, translating them into `ApiResponse<object>.Fail` with status 500.
 
+### Architectural Evolution: Upgrading from Custom Middleware to Modern `IExceptionHandler` (.NET 8/9/10)
+
+#### 1. The Core Concept: Why Middleware is Outdated for Error Handling
+In earlier versions of ASP.NET Core, global error handling required placing a custom `ExceptionHandlingMiddleware` at the start of the pipeline with a `try/catch` wrapper around `_next(context)`. While functional, modern .NET (8+) introduces `IExceptionHandler` â€” a first-class framework abstraction designed specifically for diagnostic pipelines.
+
+#### 2. Why Change? The 4 Critical Flaws in Custom `ExceptionHandlingMiddleware`
+
+| Flaw / Bottleneck | The Danger in Production | How Modern .NET Solves It |
+| :--- | :--- | :--- |
+| **1. Stream Collision (`HasStarted`)** | If an exception occurs after response bytes or headers were already flushed to the client (e.g., during streaming or large payloads), calling `context.Response.StatusCode = ...` throws a fatal `InvalidOperationException`, masking the true error. | The framework's `IExceptionHandler` lifecycle safely checks `Response.HasStarted` and coordinates with the underlying Kestrel pipeline before touching the response. |
+| **2. High Allocation Overhead** | Instantiating `new JsonSerializerOptions { ... }` inside the error path incurs heavy metadata caching and GC allocations on every exception. | Static or shared JSON options serialize directly to `context.Response.Body` via `JsonSerializer.SerializeAsync` with zero intermediate string allocations. |
+| **3. Monolithic Catch Block** | Handling database, auth, domain, and external service errors inside a single giant `switch (exception)` block violates the Open/Closed Principle (OCP). | Modern .NET provides an extensible **Chain of Responsibility**: you can register multiple focused handlers (e.g., `DatabaseExceptionHandler`, `GlobalExceptionHandler`) that return `ValueTask<bool>`. |
+| **4. Middleware Pipeline Fragility** | Custom middleware must be ordered manually and delicately in `Program.cs`. Misplacing it relative to routing, CORS, or authentication can cause silent failures or bypassed headers. | Handlers are registered via `builder.Services.AddExceptionHandler<T>()` and activated using standard `app.UseExceptionHandler()`. |
+
+#### 3. Architecture Comparison: The Before & After Flow
+
+```mermaid
+flowchart TD
+    subgraph Legacy_Flow ["Legacy: Custom Middleware (Before)"]
+        M1["HTTP Request"] --> M2["ExceptionHandlingMiddleware (try/catch)"]
+        M2 --> M3["Controller / BLL Action"]
+        M3 -- Throws Exception --> M2
+        M2 --> M4["Giant switch(exception)"]
+        M4 --> M5["Allocate new JsonSerializerOptions"]
+        M5 --> M6["Allocate JSON string in RAM"]
+        M6 --> M7["WriteAsync to Response Stream"]
+    end
+
+    subgraph Modern_Flow ["Modern: IExceptionHandler Pipeline (After)"]
+        H1["HTTP Request"] --> H2["app.UseExceptionHandler() (Framework Native)"]
+        H2 --> H3["Controller / BLL Action"]
+        H3 -- Throws Exception --> H2
+        H2 --> H4["GlobalExceptionHandler : IExceptionHandler"]
+        H4 --> H5["Stream directly to Response.Body (Zero intermediate string)"]
+        H4 --> H6["Preserves ApiResponse envelope with localized error & TraceId"]
+    end
+```
+
+#### 4. Side-by-Side Code Blueprint
+
+##### BEFORE: Legacy `ExceptionHandlingMiddleware.cs`
+```csharp
+// âŒ Problems: Manual pipeline try/catch, new JsonSerializerOptions allocation, string allocation
+public class ExceptionHandlingMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+
+    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context, IStringLocalizer<Messages> localizer)
+    {
+        try
+        {
+            await _next(context);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled exception occurred: {Message}", ex.Message);
+            await HandleExceptionAsync(context, ex, localizer);
+        }
+    }
+
+    private static Task HandleExceptionAsync(HttpContext context, Exception exception, IStringLocalizer<Messages> localizer)
+    {
+        // âŒ Direct status mutation without checking context.Response.HasStarted
+        var statusCode = HttpStatusCode.InternalServerError;
+        string errorCode = "General.UnhandledException";
+        string defaultMessage = "An unexpected error occurred. Please try again later.";
+
+        switch (exception)
+        {
+            case UnauthorizedAccessException:
+                statusCode = HttpStatusCode.Unauthorized;
+                errorCode = "General.Unauthorized";
+                defaultMessage = "Unauthorized access.";
+                break;
+            case KeyNotFoundException:
+                statusCode = HttpStatusCode.NotFound;
+                errorCode = "General.NotFound";
+                defaultMessage = "The requested resource was not found.";
+                break;
+            // ... other cases
+        }
+
+        var localized = localizer[errorCode];
+        var resolvedMessage = (!localized.ResourceNotFound && !string.IsNullOrEmpty(localized.Value))
+            ? localized.Value
+            : defaultMessage;
+
+        var errorItem = new ApiErrorItem(errorCode, resolvedMessage, "ServerCrash");
+        var response = ApiResponse<object>.Fail(resolvedMessage, [errorItem], (int)statusCode);
+
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = (int)statusCode;
+
+        // âŒ Allocates options metadata on every exception!
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
+
+        // âŒ Serializes to intermediate string, then writes string to stream
+        return context.Response.WriteAsync(JsonSerializer.Serialize(response, jsonOptions));
+    }
+}
+```
+
+##### AFTER: Modern `GlobalExceptionHandler.cs` (Preserving `ApiResponse<T>`)
+```csharp
+// âœ… Benefits: Native IExceptionHandler, zero string allocation, reusable JSON options, safe stream handling
+using System.Text.Json;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
+using Shared.DTO;
+using BLL;
+
+namespace API.Middleware;
+
+public class GlobalExceptionHandler(
+    ILogger<GlobalExceptionHandler> logger,
+    IStringLocalizer<Messages> localizer) : IExceptionHandler
+{
+    // Reusable cached serializer options (zero repeated allocation)
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken)
+    {
+        // 1. Guard against response already started
+        if (httpContext.Response.HasStarted)
+        {
+            logger.LogWarning("Response already started; cannot write unified error response for {Exception}", exception.GetType().Name);
+            return false;
+        }
+
+        logger.LogError(exception, "An unhandled exception occurred: {Message}", exception.Message);
+
+        // 2. Pattern match exception to HTTP status & localization error code
+        var (statusCode, errorCode, defaultMessage) = exception switch
+        {
+            UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "General.Unauthorized", "Unauthorized access."),
+            KeyNotFoundException => (StatusCodes.Status404NotFound, "General.NotFound", "The requested resource was not found."),
+            ArgumentException or InvalidOperationException => (StatusCodes.Status400BadRequest, "General.Validation", exception.Message),
+            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, "General.Conflict", "A conflict occurred while updating the database."),
+            DbUpdateException => (StatusCodes.Status400BadRequest, "General.DatabaseUpdateFailed", "Database operation failed."),
+            _ => (StatusCodes.Status500InternalServerError, "General.UnhandledException", "An unexpected error occurred. Please try again later.")
+        };
+
+        // 3. Resolve localized message with automatic English fallback
+        var localized = localizer[errorCode];
+        var resolvedMessage = (!localized.ResourceNotFound && !string.IsNullOrEmpty(localized.Value))
+            ? localized.Value
+            : defaultMessage;
+
+        var errorItem = new ApiErrorItem(errorCode, resolvedMessage, exception.GetType().Name);
+        var response = ApiResponse<object>.Fail(
+            message: resolvedMessage,
+            errors: [errorItem],
+            statusCode: statusCode,
+            traceId: httpContext.TraceIdentifier
+        );
+
+        // 4. Set headers and stream directly into the response body
+        httpContext.Response.StatusCode = statusCode;
+        httpContext.Response.ContentType = "application/json";
+
+        await JsonSerializer.SerializeAsync(httpContext.Response.Body, response, JsonOptions, cancellationToken);
+
+        return true; // Mark exception as completely handled
+    }
+}
+```
+
+##### Configuration in `Program.cs`
+```csharp
+// 1. In Service Registration:
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+// 2. In Middleware Pipeline (replaces app.UseMiddleware<ExceptionHandlingMiddleware>()):
+app.UseExceptionHandler();
+```
+
+
+---
+
+#### 5. The Full 5-Formats Problem: Does IExceptionHandler Solve It?
+
+This is a critical architectural question. The answer is: **IExceptionHandler improves the technical plumbing of Layer 3 only. The 5-formats solution is preserved by keeping ApiResponse<T> as the output of ALL 3 layers.**
+
+##### The 3-Layer Architecture That Enforces 1 Unified Format
+
+`
+Format 1 (Validation Dictionary)  --> Layer 2: Program.cs InvalidModelStateResponseFactory --> ApiResponse<T>
+Format 3 (Identity Error Array)   --> Layer 1: ApiBaseController.HandleRequest()           --> ApiResponse<T>
+Format 4 (Custom Controller)      --> Layer 1: ApiBaseController.HandleSuccess/HandleError  --> ApiResponse<T>
+Format 5 (Raw String/HTML Crash)  --> Layer 3: GlobalExceptionHandler (IExceptionHandler)  --> ApiResponse<T>
+Format 2 (ProblemDetails)         --> Layer 3: GlobalExceptionHandler (IExceptionHandler)  --> ApiResponse<T>
+`
+
+> **Key Rule:** IExceptionHandler handles Layer 3 (unhandled crashes) only. Layers 1 and 2 still run unchanged. The output of all 3 layers stays ApiResponse<T>.
+
+##### Why NOT Switching to RFC 7807 ProblemDetails in IExceptionHandler
+
+Some .NET tutorials recommend returning ProblemDetails (RFC 7807) from IExceptionHandler. For this template, that would reintroduce Format 2 as a second response shape for crash scenarios, breaking the unified contract the frontend relies on.
+
+| Decision | RFC 7807 ProblemDetails | ApiResponse<T> (Template Choice) |
+| :--- | :--- | :--- |
+| **Standard** | IETF global HTTP standard | Internal enterprise contract |
+| **Frontend parsing** | One parser for public APIs | One parser for this API |
+| **Localization** | Not built-in | Built-in via IStringLocalizer |
+| **Consistency** | Mixed with other layers | 100% uniform across ALL endpoints |
+| **Use case** | Public APIs / open ecosystems | Internal enterprise / team APIs |
+
+**Verdict:** Keep ApiResponse<T> in GlobalExceptionHandler. The 5-format chaos is fully eliminated.
+
+##### Full Response Map After Migration (Proof of 1 Unified Format)
+
+| Source | Handled By | HTTP Status | Output Format |
+| :--- | :--- | :--- | :--- |
+| Missing required field ([Required]) | InvalidModelStateResponseFactory in Program.cs | 400 | ApiResponse<T> |
+| Business rule failure (Result.Fail) | ApiBaseController.HandleRequest() | 400/404/409/etc. | ApiResponse<T> |
+| Manual controller response | ApiBaseController.HandleSuccess/HandleError() | 200/201/etc. | ApiResponse<T> |
+| DbUpdateConcurrencyException crash | GlobalExceptionHandler (IExceptionHandler) | 409 | ApiResponse<T> |
+| UnauthorizedAccessException crash | GlobalExceptionHandler (IExceptionHandler) | 401 | ApiResponse<T> |
+| Any unhandled 500 server crash | GlobalExceptionHandler (IExceptionHandler) | 500 | ApiResponse<T> |
+| Client disconnects (OperationCanceledException) | GlobalExceptionHandler (IExceptionHandler) | 499 | No body |
+
+##### OperationCanceledException: The Hidden Production Noise Problem
+
+Before IExceptionHandler, the old middleware logged client disconnections as LogError:
+
+`csharp
+// OLD: Every browser tab close floods logs with fake ERROR alerts!
+_logger.LogError(ex, "An unhandled exception occurred: {Message}", ex.Message);
+`
+
+After IExceptionHandler, cancellations are correctly handled silently:
+
+`csharp
+// NEW: Correct classification - NOT a real error
+if (exception is OperationCanceledException)
+{
+    logger.LogInformation("Request cancelled by client at {Path}", httpContext.Request.Path);
+    httpContext.Response.StatusCode = 499; // Client Closed Request
+    return true; // Handled - no body needed
+}
+`
+
+> **Why 499?** HTTP 499 (Client Closed Request) is an Nginx-originated status code that has become the industry standard for signaling that the client intentionally closed the connection. It does NOT trigger error alerts in monitoring tools.
+
+##### Program.cs: The Exact 3-Line Migration
+
+`csharp
+// REMOVE (old):
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+// ADD in builder.Services section (BEFORE var app = builder.Build()):
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+// Note: AddProblemDetails() is NOT needed since we use ApiResponse<T>, not ProblemDetails.
+
+// ADD in middleware pipeline (replaces UseMiddleware line):
+app.UseExceptionHandler();
+// ASP.NET Core now automatically places this in the correct pipeline position.
+// No more manual ordering risk.
+`
 ### 5. Flexible Controller Response Handling (`HandleRequest`)
 
 #### Why We Made This Change: The 3 Inflexibility Pain Points
@@ -1233,14 +1578,126 @@ flowchart LR
 ```
 
 ### Key Architectural Guidelines:
-1. **Separation of DTOs**:
-   - `Shared.DTO.RoleDtos`: Contains pure role definitions (`CreateRoleDto`, `EditRoleDto`, `RoleDetailsDto`, `RoleDto`).
-   - `Shared.DTO.UserRoleDtos`: Contains user-role assignment operations (`AssignUserRoleDto`, `UpdateUserRolesDto`, `UserRoleInfoDto`).
-2. **DTO Identification (`RoleId` vs `RoleName`)**:
-   - DTOs accept **`RoleId`** for stable dropdown selection (protecting against role rename breaks).
-   - Internal service methods resolve `RoleId` $\to$ `RoleName` before calling `_userManager.AddToRoleAsync(...)` / `_userManager.RemoveFromRolesAsync(...)`.
-3. **Authorization & JWT**:
-   - JWT tokens embed role names into `ClaimTypes.Role` so standard `[Authorize(Roles = "...")]` attributes work out of the box.
+
+1. **Strongly-Typed Role Constants (`Shared.Constants.AppRoles`)**:
+   - All system role names are centralized in a single constant class (`AppRoles.cs`) inside the `Shared` project:
+     ```csharp
+     namespace Shared.Constants;
+
+     public static class AppRoles
+     {
+         public const string Admin = "Admin";
+         public const string ITAdmin = "IT Admin";
+         public const string User = "User";
+         public const string TopManager = "Top Manager";
+     }
+     ```
+
+   #### Complete Usage Examples Across the Application:
+
+   * **In Controllers (`[Authorize]` attributes)**:
+     ```csharp
+     using Shared.Constants;
+
+     // Single Role
+     [Authorize(Roles = AppRoles.Admin)]
+     
+     // Multiple Roles
+     [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.ITAdmin}")]
+     public class RoleController : ApiBaseController
+     ```
+
+   * **In Business Logic & Services (`UserService.cs`)**:
+     ```csharp
+     using Shared.Constants;
+
+     // Checking protected roles before status change or deletion
+     if (currentUserRole == AppRoles.ITAdmin)
+     {
+         return Error.Validation("User.CannotChangeAdminStatus", "Cannot change status of IT Admin user.");
+     }
+
+     if (roleName == null || roleName == AppRoles.ITAdmin)
+     {
+         return Error.Validation("User.RoleNotFound", "The specified role does not exist or cannot be assigned.");
+     }
+     ```
+
+   * **In Data Repositories (`UserRepository.cs`)**:
+     ```csharp
+     using Shared.Constants;
+
+     // Filtering out super admin accounts from public listings
+     var itAdminUsers = await _userManager.GetUsersInRoleAsync(AppRoles.ITAdmin);
+     var itAdminUserIds = itAdminUsers.Select(u => u.Id).ToList();
+     query = query.Where(u => !itAdminUserIds.Contains(u.Id));
+     ```
+
+   * **In EF Core Database Seeding (`RoleConfiguration.cs`)**:
+     ```csharp
+     using Shared.Constants;
+
+     builder.HasData(
+         new IdentityRole
+         {
+             Id = "1",
+             Name = AppRoles.Admin,
+             NormalizedName = AppRoles.Admin.ToUpper(),
+             ConcurrencyStamp = "d5a947dc-0bc8-4eb1-998f-410a8801f92e"
+         },
+         new IdentityRole
+         {
+             Id = "2",
+             Name = AppRoles.ITAdmin,
+             NormalizedName = AppRoles.ITAdmin.ToUpper(),
+             ConcurrencyStamp = "f623e5a3-7ce8-4f81-9b16-7284fbfec310"
+         }
+     );
+     ```
+
+2. **Domain Entity & Navigation Property (`User.cs`)**:
+   - `User` entity inherits from `IdentityUser` and directly exposes a real EF Core navigation collection of `IdentityRole`:
+     ```csharp
+     public class User : IdentityUser
+     {
+         // Navigation property: Real .NET IdentityRole
+         public ICollection<IdentityRole> Roles { get; set; } = new List<IdentityRole>();
+     }
+     ```
+   - **No fake DTO references in Domain Entities**: `User.cs` never references `RoleDto`—domain models only know about other entities (`IdentityRole`).
+
+3. **EF Core Many-to-Many Configuration (`UserConfiguration.cs`)**:
+   - Configured using ASP.NET Identity's native `AspNetUserRoles` table without creating unneeded custom tables:
+     ```csharp
+     builder.HasMany(u => u.Roles)
+         .WithMany()
+         .UsingEntity<IdentityUserRole<string>>(
+             j => j.HasOne<IdentityRole>().WithMany().HasForeignKey(ur => ur.RoleId),
+             j => j.HasOne<User>().WithMany().HasForeignKey(ur => ur.UserId));
+     ```
+
+4. **Single-Query Eager Loading (`UserRepository.cs`)**:
+   - Fetching users with roles uses EF Core `.Include(u => u.Roles)` for optimized single-query SQL generation:
+     ```csharp
+     public async Task<User?> GetByIdAsync(string id) =>
+         await _userManager.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == id);
+     ```
+
+5. **Clean Object Mapping (`UserMappingConfig.cs`)**:
+   - Mapster converts `IdentityRole` $\to$ `RoleDto` and `User.Roles` $\to$ `UserDto.Roles` automatically:
+     ```csharp
+     config.NewConfig<IdentityRole, RoleDto>()
+         .Map(dest => dest.RoleId, src => src.Id)
+         .Map(dest => dest.RoleName, src => src.Name ?? string.Empty);
+
+     config.NewConfig<User, UserDto>()
+         .Map(dest => dest.UserId, src => src.Id)
+         .Map(dest => dest.Roles, src => src.Roles);
+     ```
+
+6. **High Level (`UserManager`) vs Low Level (`UserStore`)**:
+   - `UserManager` & `AuthService` handle business rules, password complexity, lockouts, and JWT issuance.
+   - `UserStore` (registered automatically via `AddEntityFrameworkStores<AppDbContext>()`) handles low-level database operations behind the scenes.
 
 ---
 
@@ -1258,3 +1715,4 @@ dotnet build "c:\Users\norhan\source\repos\Backend_Template\API\API.csproj"
    - Verify sending 15 rapid requests from the same IP returns `429 Too Many Requests`.
 2. **Pagination:**
    - Verify `GET /api/User?pageIndex=1&pageSize=10` returns `totalCount` correctly without needing separate count specifications.
+

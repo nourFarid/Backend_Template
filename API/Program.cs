@@ -62,6 +62,7 @@ builder.Services.AddLocalization(opts => opts.ResourcesPath = string.Empty);
 
 // 5. Global Exception Handling (IExceptionHandler)
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 var supportedCultures = new[] { "en", "ar", "ar-EG" };
 var localizationOptions = new RequestLocalizationOptions()
